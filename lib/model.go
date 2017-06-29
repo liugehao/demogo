@@ -1,5 +1,8 @@
 package lib
 
+import "database/sql"
+
+var DB *sql.DB
 
 type RouteDevice struct {
 	sta  string
