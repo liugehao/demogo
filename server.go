@@ -1,24 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"net"
 	"log"
-	"os"
+	"serv1/lib"
+	"fmt"
 )
 
 func main() {
-
-	fileName := "xxx_debug.log"
-	logFile,err  := os.Create(fileName)
-	defer logFile.Close()
-	if err != nil {
-		log.Fatalln("open file error !")
-	}
-	//debugLog := log.New(logFile,"[Debug]",log.Llongfile)
-
-	fmt.Printf("hello world！")
-	listener, err := net.Listen("tcp", "127.0.0.1:50000")
+	lib.Init()
+	listener, err := net.Listen("tcp", "127.0.0.1:50001")
 
 	if err != nil {
 		log.Println("Error listening:", err.Error())
@@ -30,21 +21,25 @@ func main() {
 			log.Println("Error accepting:", err.Error())
 			return
 		}
-		//create a goroutine for each request.
 		go doServerStuff(conn)
 	}
 }
 
 func doServerStuff(conn net.Conn) {
 	log.Println("new connection:", conn.LocalAddr())
+    s:=""
 	for {
-		buf := make([]byte, 1024)
+		buf := make([]byte, 1024*512)
 		length, err := conn.Read(buf)
 		if err != nil {
-			log.Fatal("Error reading:", err.Error())
-			return
-		}
+			//log.Fatal("Error reading:", err.Error())
+			//fmt.Println(buf[:length])
+			s += string( buf[:length])
 
-		log.Println("Receive data from client:", string(buf[:length]))
+			break
+		}
+		s += string( buf[:length])
 	}
+	lib.Parse(s)
+
 }

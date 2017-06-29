@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	//"strings"
@@ -9,25 +9,6 @@ import (
 	"log"
 )
 
-type RouteDevice struct {
-	sta  string
-	tm   string
-	batt string
-	ver  string
-}
-type T00 struct {
-	RouteDevice
-	tm    string
-	value string
-}
-type T01 struct {
-	RouteDevice
-	Vup   string
-	Vdown string
-	err   string
-	tm    string
-	sn    string
-}
 
 var RdRegSta *regexp.Regexp
 var RdRegTm *regexp.Regexp
@@ -61,11 +42,13 @@ func ParseRouteDevice(s string) (fl RouteDevice, err error) {
 
 	return
 }
+
 func rex(s string, regexp2 *regexp.Regexp, index int) string {
 	d := regexp2.FindStringSubmatch(s)
 	return d[index]
 
 }
+
 func ParseT01(rd RouteDevice, s string) (t01 T01, err error) {
 	t01.RouteDevice = rd
 	t01.tm, err = ParseDateTime(rex(s, RdRegTm, 1))
@@ -87,30 +70,16 @@ func ParseDateTime(s string) (string, error) {
 	return s[:4] + "-" + s[4:6] + "-" + s[6:8] + " " + s[8:10] + ":" + s[10:12] + ":" + s[12:], nil
 }
 
-func main() {
-	Init()
-
-	for i:=0;i<200000;i++{
-		Parse()
-	}
-
-}
-
-func Save(data interface{}) {
-	//fmt.Println()
-	//fmt.Println(data)
-	/*switch data.(type) {
-	case RouteDevice:
-	case T00:
-	case T01:
-	default:
-
-	}
-	println(data)*/
-}
-
-func Parse()  {
+/*func main() {
 	str := "STA:334;TM:20160909090909;BATT:3.6V;VER:3.3;#T00:20160909090909;3.5mpa;#T01:TM:20160909090909;SN:232;V+:34L;V-:34L;E:00;#"
+
+	for i := 0; i < 200000; i++ {
+		Parse(str)
+	}
+
+}*/
+
+func Parse(str string) {
 
 	buf := strings.Split(str, "#")
 	var fl RouteDevice
