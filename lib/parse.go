@@ -9,7 +9,6 @@ import (
 	"log"
 )
 
-
 var RdRegSta *regexp.Regexp
 var RdRegTm *regexp.Regexp
 var RdRegBatt *regexp.Regexp
@@ -20,25 +19,29 @@ var T01RegVup *regexp.Regexp
 var T01RegVdown *regexp.Regexp
 var T01RegErr *regexp.Regexp
 
+var NumberRex *regexp.Regexp
+
 func Init() {
 	RdRegSta = regexp.MustCompile("STA:(.*?);")
 	RdRegTm = regexp.MustCompile("TM:(.*?);")
-	RdRegBatt = regexp.MustCompile("BATT:(.*?);")
+	RdRegBatt = regexp.MustCompile("BATT:([\\d.]+)")
 	RdRegVer = regexp.MustCompile("VER:(.*?);")
 
 	T01RegSn = regexp.MustCompile("SN:(.*?);")
-	T01RegVup = regexp.MustCompile("V\\+:(.*?);")
-	T01RegVdown = regexp.MustCompile("V-:(.*?);")
-	T01RegErr = regexp.MustCompile("E:(.*?);")
+	T01RegVup = regexp.MustCompile("V\\+:([\\d.]+)")
+	T01RegVdown = regexp.MustCompile("V-:([\\d.]+)")
+	T01RegErr = regexp.MustCompile("E:([\\d.]+)")
+
+	NumberRex= regexp.MustCompile("([\\d.]+)")
 
 }
 
 func ParseRouteDevice(s string) (fl RouteDevice, err error) {
 
-	fl.sta = rex(s, RdRegSta, 1)
-	fl.tm, err = ParseDateTime(rex(s, RdRegTm, 1))
-	fl.batt = rex(s, RdRegBatt, 1)
-	fl.ver = rex(s, RdRegVer, 1)
+	fl.STA = rex(s, RdRegSta, 1)
+	fl.TM, err = ParseDateTime(rex(s, RdRegTm, 1))
+	fl.BATT = rex(s, RdRegBatt, 1)
+	fl.VER = rex(s, RdRegVer, 1)
 
 	return
 }
@@ -51,13 +54,14 @@ func rex(s string, regexp2 *regexp.Regexp, index int) string {
 
 func ParseT01(rd RouteDevice, s string) (t01 T01, err error) {
 	t01.RouteDevice = rd
-	t01.tm, err = ParseDateTime(rex(s, RdRegTm, 1))
+	t01.TM, err = ParseDateTime(rex(s, RdRegTm, 1))
 	if err != nil {
 		return
 	}
 	t01.Vdown = rex(s, T01RegVdown, 1)
 	t01.Vup = rex(s, T01RegVup, 1)
-	t01.sn = rex(s, T01RegSn, 1)
+	t01.SN = rex(s, T01RegSn, 1)
+	t01.ERR = rex(s, T01RegErr, 1)
 
 	return
 
@@ -93,21 +97,21 @@ func Parse(str string) {
 		switch s[:3] {
 		case "STA":
 			fl, err = ParseRouteDevice(s)
-			Save(fl)
+			fl.save()
 		case "T01":
 			t01, err = ParseT01(fl, s)
-			Save(t01)
+			t01.save()
 		case "T00":
 			tmpS := strings.Split(s[4:], ";")
 			t00 := new(T00)
 			t00.RouteDevice = fl
-			t00.value = tmpS[1]
-			t00.tm, err = ParseDateTime(tmpS[0])
+			t00.PRESSURE = NumberRex.FindString(tmpS[1])
+			t00.TM, err = ParseDateTime(tmpS[0])
 			if err != nil {
 				log.Println(err.Error())
 				return
 			}
-			Save(t00)
+			t00.save()
 		default:
 
 		}
